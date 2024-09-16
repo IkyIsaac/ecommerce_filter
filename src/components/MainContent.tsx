@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useFilter } from "./FilterContext";
 import { Tally3 } from "lucide-react";
 import axios from "axios";
+import BookCard from "./BookCard";
 
 const MainContent = () => {
   const { searchQuery, selectedCategory, minPrice, maxPrice, keyword } =
@@ -12,7 +13,7 @@ const MainContent = () => {
   const [filter, setFilter] = useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [dropdownOpen, setDropdownOpen] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const itemsPerPage = 12;
 
   useEffect(() => {
@@ -38,8 +39,8 @@ const MainContent = () => {
     let filteredProducts = products;
 
     if (selectedCategory) {
-      filteredProducts=filteredProducts.filter(
-        product => product.category == selectedCategory
+      filteredProducts = filteredProducts.filter(
+        (product) => product.category == selectedCategory
       );
       console.log(filteredProducts);
     }
@@ -66,13 +67,43 @@ const MainContent = () => {
         return filteredProducts.sort((a, b) => a.price - b.price);
       case "popular":
         return filteredProducts.sort((a, b) => b.rating - a.rating);
-        default:
-            return filteredProducts
+      default:
+        return filteredProducts;
     }
   };
 
   const filteredProducts = getFilteredProducts();
-  console.log(filteredProducts);
+
+  const totalProducts = 100;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const getPaginatonButtons = () => {
+    const buttons: number[] = [];
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    if (currentPage - 2 < 1) {
+      endPage = Math.min(totalPages, endPage + (2 - currentPage - 1));
+    }
+    if (currentPage + 2 > totalPages) {
+      startPage = Math.min(
+        totalPages,
+        startPage - (2 - totalPages - currentPage)
+      );
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+      buttons.push(page);
+    }
+
+    return buttons;
+  };
 
   return (
     <section className="xl:w-[55rem] lg:w-[55rem] sm:w-[40rem] xs:w-[20rem] p-5">
@@ -116,7 +147,39 @@ const MainContent = () => {
         </div>
         {/* Cards Section */}
         <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-5">
-          {/* BookCard */}
+          {filteredProducts.map((product) => (
+            <BookCard
+              key={product.id}
+              id={product.id}
+              title={product.title}
+              image={product.thumbnail}
+              price={product.price}
+            />
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row justify-between items-center mt-5">
+          {/* Previous Button */}
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage == 1}
+            className="border px-4 py-2 mx-2 rounded-full"
+          >
+            Previous
+          </button>
+            {/* 1,2,3,4,5 */}
+            <div className="flex flex-wrap justify-center">
+              {/* Pagination */}
+              {getPaginatonButtons().map(page=>(
+                  <button key={page} onClick={()=> handlePageChange(page)} className={`border px-4 py-2 mx-1 rounded-full ${page==currentPage ? "bg-black text-white": ""}`} > {page} </button>
+              ))}
+            </div>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage == totalPages}
+            className="border px-4 py-2 mx-2 rounded-full"
+          >
+            Next
+          </button>
         </div>
       </div>
     </section>
